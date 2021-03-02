@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1066923897179",
+    "project_id": "doctor-patient-access",
+    "storage_bucket": "doctor-patient-access.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1066923897179:android:7884d0d8fe098754466a7e",
+        "android_client_info": {
+          "package_name": "com.example.neurostimulationpatientaccess"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1066923897179-5c1g574gt5jal5qskjh1nvaa7lgk949s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDgzKJkuHCmWJqx8UuCfPtfJe_at64Niyg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1066923897179-5c1g574gt5jal5qskjh1nvaa7lgk949s.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
