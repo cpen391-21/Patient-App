@@ -17,10 +17,11 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class SignInActivity extends AppCompatActivity implements View.OnClickListener{
 
-    private TextView register;
+    private TextView register, forgotPassword;
     private EditText editTextEmail, editTextPassword;
     private Button signIn;
 
@@ -36,6 +37,9 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
 
         register = (TextView) findViewById(R.id.register);
         register.setOnClickListener(this);
+
+        forgotPassword = (TextView) findViewById(R.id.forgotPassword);
+        forgotPassword.setOnClickListener(this);
 
         signIn = (Button) findViewById(R.id.signIn);
         signIn.setOnClickListener(this);
@@ -54,6 +58,10 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
                 break;
             case R.id.signIn:
                 userLogin();
+                break;
+
+            case R.id.forgotPassword:
+                startActivity(new Intent(this, ForgotPassword.class));
                 break;
         }
     }
@@ -92,11 +100,18 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if (task.isSuccessful()) {
-                    Toast.makeText(SignInActivity.this, "Sign in is successful!", Toast.LENGTH_LONG).show();
-                    progressBar.setVisibility(View.GONE);
-                    toMenu();
+                    FirebaseUser patient = FirebaseAuth.getInstance().getCurrentUser();
+
+                    if (patient.isEmailVerified()) {
+                        Toast.makeText(SignInActivity.this, "Sign-In is successful!", Toast.LENGTH_LONG).show();
+                        progressBar.setVisibility(View.GONE);
+                        toMenu();
+                    } else {
+                        patient.sendEmailVerification();
+                        Toast.makeText(SignInActivity.this, "Email is unverified. Check your email.", Toast.LENGTH_LONG).show();
+                    }
                 } else {
-                    Toast.makeText(SignInActivity.this, "Failed to login. Check credentials.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(SignInActivity.this, "Failed to sign in. Check credentials!", Toast.LENGTH_LONG).show();
                     progressBar.setVisibility(View.GONE);
                 }
             }
