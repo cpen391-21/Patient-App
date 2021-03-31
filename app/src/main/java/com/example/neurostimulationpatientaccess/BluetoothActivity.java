@@ -246,6 +246,10 @@ public class BluetoothActivity extends AppCompatActivity implements AdapterView.
             public void onClick(View view) {
                 Log.d(TAG, "onReceive: ACTION FOUND, display paired");
                 if (mBluetoothAdapter.isEnabled()) {
+                    if (mBluetoothAdapter.isDiscovering()) {
+                        mBluetoothAdapter.cancelDiscovery();
+                        Log.d(TAG, "btnPairedDevices: Cancelling discovery.");
+                    }
                     //set of devices
                     Set<BluetoothDevice> devices = mBluetoothAdapter.getBondedDevices();
                     mBTDevices.clear();
@@ -312,23 +316,27 @@ public class BluetoothActivity extends AppCompatActivity implements AdapterView.
     public void btnDiscover(View view) {
         Log.d(TAG, "btnDiscover: Looking for unpaired devices.");
 
-        if (mBluetoothAdapter.isDiscovering()) {
-            mBluetoothAdapter.cancelDiscovery();
-            Log.d(TAG, "btnDiscover: Cancelling discovery.");
+        if (mBluetoothAdapter.isEnabled()) {
+            if (mBluetoothAdapter.isDiscovering()) {
+                mBluetoothAdapter.cancelDiscovery();
+                Log.d(TAG, "btnDiscover: Cancelling discovery.");
 
-            //check BT permissions
-            checkBTPermissions();
+                //check BT permissions
+                checkBTPermissions();
 
-            mBluetoothAdapter.startDiscovery();
-            IntentFilter discoverDeviceIntent = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-            registerReceiver(mBroadcastReceiver3, discoverDeviceIntent);
-        }
-        if (!mBluetoothAdapter.isDiscovering()) {
-            //check BT permissions in manifest
-            checkBTPermissions();
-            mBluetoothAdapter.startDiscovery();
-            IntentFilter discoverDeviceIntent = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-            registerReceiver(mBroadcastReceiver3, discoverDeviceIntent);
+                mBluetoothAdapter.startDiscovery();
+                IntentFilter discoverDeviceIntent = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+                registerReceiver(mBroadcastReceiver3, discoverDeviceIntent);
+            }
+            if (!mBluetoothAdapter.isDiscovering()) {
+                //check BT permissions in manifest
+                checkBTPermissions();
+                mBluetoothAdapter.startDiscovery();
+                IntentFilter discoverDeviceIntent = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+                registerReceiver(mBroadcastReceiver3, discoverDeviceIntent);
+            }
+        } else {
+            Toast.makeText(BluetoothActivity.this, "Bluetooth is not connected.", Toast.LENGTH_LONG).show();
         }
     }
 

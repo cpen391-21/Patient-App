@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".BluetoothActivity">
-<!--
+
     <ImageView
         android:id="@+id/home_background"
         android:layout_width="wrap_content"
@@ -16,25 +16,5 @@
         android:alpha=".20"
         android:scaleType="fitEnd"
         android:src="@drawable/background_image_home" />
--->
-    <TextView
-        android:id="@+id/tvDeviceName"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="5sp"
-        android:layout_marginLeft="8sp"
-        android:layout_marginBottom="20sp"
-        android:textSize="20sp"/>
-
-    <TextView
-        android:id="@+id/tvDeviceAddress"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/tvDeviceName"
-        android:layout_marginTop="5sp"
-        android:layout_marginLeft="10sp"
-        android:layout_marginBottom="20sp"
-        android:textSize="20sp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
