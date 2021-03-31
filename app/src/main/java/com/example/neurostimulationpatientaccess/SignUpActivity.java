@@ -64,10 +64,6 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
         }
     }
 
-    static void setTrueBoolean(boolean doctorExists) {
-        doctorExists = true;
-    }
-
     private void registerUser() {
         String fullName = editTextFullName.getText().toString().trim();
         String email = editTextEmail.getText().toString().trim();
@@ -201,6 +197,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
             }
         });
 
+        //old reference code
         /*
         if (password.isEmpty()) {
             editTextPassword.setError("Please enter a password!");

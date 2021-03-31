@@ -18,6 +18,11 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GetTokenResult;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.Map;
 
 public class SignInActivity extends AppCompatActivity implements View.OnClickListener{
 
@@ -26,6 +31,7 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
     private Button signIn;
 
     private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
     private ProgressBar progressBar;
 
     @Override
@@ -34,6 +40,7 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
         setContentView(R.layout.activity_sign_in);
 
         mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         register = (TextView) findViewById(R.id.register);
         register.setOnClickListener(this);
@@ -96,23 +103,59 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
 
         progressBar.setVisibility(View.VISIBLE);
 
-        mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+        db.collection("emails").document("patient_emails")
+                .get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
-            public void onComplete(@NonNull Task<AuthResult> task) {
-                if (task.isSuccessful()) {
-                    FirebaseUser patient = FirebaseAuth.getInstance().getCurrentUser();
-
-                    if (patient.isEmailVerified()) {
-                        Toast.makeText(SignInActivity.this, "Sign-In is successful!", Toast.LENGTH_LONG).show();
-                        progressBar.setVisibility(View.GONE);
-                        toMenu();
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                DocumentSnapshot pat = task.getResult();
+                if (pat != null) {
+                    Map<String, Object> patientEmails = pat.getData();
+                    if (pat.getData().get(email) == null) {
+                        System.out.println("Patient does not exist." + task.getException());
+                        editTextEmail.setError("Patient is not in database. Provide valid patient email!");
+                        editTextEmail.requestFocus();
+                        return;
                     } else {
-                        patient.sendEmailVerification();
-                        Toast.makeText(SignInActivity.this, "Email is unverified. Check your email.", Toast.LENGTH_LONG).show();
+                        mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                            @Override
+                            public void onComplete(@NonNull Task<AuthResult> task) {
+                                if (task.isSuccessful()) {
+                                    FirebaseUser patient = FirebaseAuth.getInstance().getCurrentUser();
+                                    //get ID token here
+                                    patient.getIdToken(true)
+                                            .addOnCompleteListener(new OnCompleteListener<GetTokenResult>() {
+                                                public void onComplete(@NonNull Task<GetTokenResult> task) {
+                                                    if (task.isSuccessful()) {
+                                                        String idToken = task.getResult().getToken();
+                                                        // Send token to your backend via HTTPS
+                                                        // ...
+                                                        System.out.println(idToken);
+                                                    } else {
+                                                        // Handle error -> task.getException();
+                                                    }
+                                                }
+                                            });
+
+                                    if (patient.isEmailVerified()) {
+                                        Toast.makeText(SignInActivity.this, "Sign-In is successful!", Toast.LENGTH_LONG).show();
+                                        progressBar.setVisibility(View.GONE);
+                                        toMenu();
+                                    } else {
+                                        patient.sendEmailVerification();
+                                        Toast.makeText(SignInActivity.this, "Email is unverified. Check your email.", Toast.LENGTH_LONG).show();
+                                    }
+                                } else {
+                                    Toast.makeText(SignInActivity.this, "Failed to sign in. Check credentials!", Toast.LENGTH_LONG).show();
+                                    progressBar.setVisibility(View.GONE);
+                                }
+                            }
+                        });
                     }
                 } else {
-                    Toast.makeText(SignInActivity.this, "Failed to sign in. Check credentials!", Toast.LENGTH_LONG).show();
-                    progressBar.setVisibility(View.GONE);
+                    System.out.println("Patient does not exist." + task.getException());
+                    editTextEmail.setError("Patient is not in database. Provide valid patient email!");
+                    editTextEmail.requestFocus();
+                    return;
                 }
             }
         });

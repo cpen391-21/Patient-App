@@ -30,10 +30,10 @@
         android:src="@drawable/title_image_patient" />
 
     <Button
-        android:id="@+id/de1soc_button"
+        android:id="@+id/bluetooth_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="DE1-SoC Connection"
+        android:text="Connect Bluetooth"
         android:textSize="20sp"
         android:height="70sp"
         android:width="300sp"
@@ -52,7 +52,7 @@
         android:height="70sp"
         android:width="300sp"
         app:backgroundTint="@android:color/holo_blue_light"
-        app:layout_constraintTop_toBottomOf="@+id/de1soc_button"
+        app:layout_constraintTop_toBottomOf="@+id/bluetooth_button"
         android:layout_marginTop="30dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"/>

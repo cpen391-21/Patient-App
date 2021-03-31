@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.example.neurostimulationpatientaccess">
 
     <application
@@ -9,7 +10,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.NeurostimulationPatientAccess">
-        <activity android:name=".ForgotPassword"></activity>
+        <activity android:name=".DeviceListAdapter"
+            tools:ignore="Instantiatable"></activity>
+        <activity android:name=".BluetoothActivity" />
+        <activity android:name=".BluetoothMenuActivity" />
+        <activity android:name=".ForgotPassword" />
         <activity android:name=".MenuActivity" />
         <activity android:name=".SignUpActivity" />
         <activity android:name=".SignInActivity" />
@@ -21,5 +26,13 @@
             </intent-filter>
         </activity>
     </application>
+
+    <uses-feature android:name="android.hardware.bluetooth" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_PRIVILEGED"
+        tools:ignore="ProtectedPermissions" />
 
 </manifest>
