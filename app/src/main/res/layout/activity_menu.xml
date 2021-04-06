@@ -1,88 +1,92 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".SignUpActivity">
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".SignUpActivity">
 
-    <ImageView
-        android:id="@+id/home_background"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:alpha=".20"
-        android:scaleType="fitEnd"
-        android:src="@drawable/background_image_home" />
+        <ImageView
+            android:id="@+id/home_background"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:alpha=".20"
+            android:scaleType="fitEnd"
+            android:src="@drawable/background_image_home" />
 
-    <ImageView
-        android:id="@+id/title_image"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="50dp"
-        android:alpha=".70"
-        android:scaleType="fitStart"
-        android:src="@drawable/title_image_patient" />
+        <ImageView
+            android:id="@+id/title_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginTop="50dp"
+            android:alpha=".70"
+            android:scaleType="fitStart"
+            android:src="@drawable/title_image_patient" />
 
-    <Button
-        android:id="@+id/bluetooth_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Connect Bluetooth"
-        android:textSize="20sp"
-        android:height="70sp"
-        android:width="300sp"
-        app:backgroundTint="@android:color/holo_blue_light"
-        app:layout_constraintBottom_toBottomOf="@+id/title_image"
-        android:layout_marginTop="50dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-    <Button
-        android:id="@+id/regimens_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Access Regimens"
-        android:textSize="20sp"
-        android:height="70sp"
-        android:width="300sp"
-        app:backgroundTint="@android:color/holo_blue_light"
-        app:layout_constraintTop_toBottomOf="@+id/bluetooth_button"
-        android:layout_marginTop="30dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"/>
+        <Button
+            android:id="@+id/bluetooth_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Connect Bluetooth"
+            android:textSize="20dp"
+            android:height="70dp"
+            android:width="300dp"
+            app:backgroundTint="@android:color/holo_blue_light"
+            app:layout_constraintBottom_toBottomOf="@+id/title_image"
+            android:layout_marginTop="50dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+        <Button
+            android:id="@+id/regimens_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Access Regimens"
+            android:textSize="20dp"
+            android:height="70dp"
+            android:width="300dp"
+            app:backgroundTint="@android:color/holo_blue_light"
+            app:layout_constraintTop_toBottomOf="@+id/bluetooth_button"
+            android:layout_marginTop="30dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
 
-    <Button
-        android:id="@+id/email_doctor"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Contact Doctor"
-        android:textSize="20sp"
-        android:height="70sp"
-        android:width="300sp"
-        app:backgroundTint="@android:color/holo_blue_light"
-        app:layout_constraintTop_toBottomOf="@+id/regimens_button"
-        android:layout_marginTop="30dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"/>
+        <Button
+            android:id="@+id/email_doctor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Contact Doctor"
+            android:textSize="20dp"
+            android:height="70dp"
+            android:width="300dp"
+            app:backgroundTint="@android:color/holo_blue_light"
+            app:layout_constraintTop_toBottomOf="@+id/regimens_button"
+            android:layout_marginTop="30dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
 
-    <Button
-        android:id="@+id/signout_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Sign Out"
-        android:textSize="20sp"
-        android:height="70sp"
-        android:width="300sp"
-        app:backgroundTint="@android:color/holo_blue_light"
-        app:layout_constraintTop_toBottomOf="@+id/email_doctor"
-        android:layout_marginTop="30dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"/>
+        <Button
+            android:id="@+id/signout_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sign Out"
+            android:textSize="20dp"
+            android:height="70dp"
+            android:width="300dp"
+            app:backgroundTint="@android:color/holo_blue_light"
+            app:layout_constraintTop_toBottomOf="@+id/email_doctor"
+            android:layout_marginTop="30dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".BluetoothActivity">
+    tools:context=".RegimensActivity">
 <!--
     <ImageView
         android:id="@+id/home_background"
@@ -18,22 +18,12 @@
         android:src="@drawable/background_image_home" />
 -->
     <TextView
-        android:id="@+id/tvDeviceName"
+        android:id="@+id/tvRegimenName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginTop="5dp"
         android:layout_marginLeft="8dp"
-        android:layout_marginBottom="20dp"
-        android:textSize="20dp"/>
-
-    <TextView
-        android:id="@+id/tvDeviceAddress"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/tvDeviceName"
-        android:layout_marginTop="5dp"
-        android:layout_marginLeft="10dp"
         android:layout_marginBottom="20dp"
         android:textSize="20dp"/>
 

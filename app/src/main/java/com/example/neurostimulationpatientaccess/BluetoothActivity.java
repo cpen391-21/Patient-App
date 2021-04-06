@@ -182,10 +182,30 @@ public class BluetoothActivity extends AppCompatActivity implements AdapterView.
     protected void onDestroy() {
         Log.d(TAG, "onDestroy: CALLED");
         super.onDestroy();
-        unregisterReceiver(mBroadcastReceiver1);
-        unregisterReceiver(mBroadcastReceiver2);
-        unregisterReceiver(mBroadcastReceiver3);
-        unregisterReceiver(mBroadcastReceiver4);
+        try {
+            //Register or UnRegister your broadcast receiver here
+            unregisterReceiver(mBroadcastReceiver1);
+        } catch(IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+        try {
+            //Register or UnRegister your broadcast receiver here
+            unregisterReceiver(mBroadcastReceiver2);
+        } catch(IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+        try {
+            //Register or UnRegister your broadcast receiver here
+            unregisterReceiver(mBroadcastReceiver3);
+        } catch(IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+        try {
+            //Register or UnRegister your broadcast receiver here
+            unregisterReceiver(mBroadcastReceiver4);
+        } catch(IllegalArgumentException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

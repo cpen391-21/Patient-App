@@ -23,6 +23,7 @@ public class MenuActivity extends AppCompatActivity {
     private Button email_doctor;
     private Button sign_out;
     private Button bluetooth_btn;
+    private Button access_regimens;
 
     private FirebaseUser patient;
     private DatabaseReference reference;
@@ -36,6 +37,7 @@ public class MenuActivity extends AppCompatActivity {
         email_doctor = (Button) findViewById(R.id.email_doctor);
         sign_out = (Button) findViewById(R.id.signout_button);
         bluetooth_btn = (Button) findViewById(R.id.bluetooth_button);
+        access_regimens = (Button) findViewById(R.id.regimens_button);
 
         patient = FirebaseAuth.getInstance().getCurrentUser();
         reference = FirebaseDatabase.getInstance().getReference("Patients");
@@ -70,6 +72,14 @@ public class MenuActivity extends AppCompatActivity {
             public void onClick(View v) {
                 //startActivity(new Intent(getApplicationContext(), BluetoothMenuActivity.class));
                 startActivity(new Intent(getApplicationContext(), BluetoothActivity.class));
+            }
+        });
+
+        access_regimens.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //get activity
+                startActivity(new Intent(getApplicationContext(), RegimensActivity.class));
             }
         });
 
