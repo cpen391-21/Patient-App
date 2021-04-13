@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
@@ -61,7 +62,7 @@ public class RegimensActivity extends AppCompatActivity implements AdapterView.O
     BluetoothAdapter mBluetoothAdapter;
     public BluetoothDevice currentDevice;
 
-    private Button btnDeleteRegimen, btnCreateRegimen, btnStartRegimen, btnStopRegimen, btnResumeRegimen, btnPauseRegimen;
+    private Button btnCreateRegimen, btnStartRegimen, btnStopRegimen, btnResumeRegimen, btnPauseRegimen; //btnDeleteRegimen is its own function
     public ArrayList<BluetoothDevice> mPairedDevices = new ArrayList<>(); //taken care of as set
     public ArrayList<Regimen> mRegimenList = new ArrayList<>();
     public ArrayList<Regimen> mServerRegimenList = new ArrayList<>();
@@ -84,6 +85,11 @@ public class RegimensActivity extends AppCompatActivity implements AdapterView.O
     private String post_URL = "";
     private String get_URL = "";
     private String FILE_NAME;
+
+    private Handler mainHandler = new Handler();
+
+    private volatile boolean stopRegimen = false;
+    private volatile boolean pauseRegimen = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,7 +123,7 @@ public class RegimensActivity extends AppCompatActivity implements AdapterView.O
         noRegimens = "No regimens available.";
         noRegimenName = "No current regimen.";
 
-        btnDeleteRegimen = (Button) findViewById(R.id.delete_regimen_btn);
+        //btnDeleteRegimen = (Button) findViewById(R.id.delete_regimen_btn);
         btnCreateRegimen = (Button) findViewById(R.id.create_regimen_btn);
         btnStartRegimen = (Button) findViewById(R.id.start_regimen_btn);
         btnStopRegimen = (Button) findViewById(R.id.stop_regimen_btn);
@@ -516,8 +522,35 @@ public class RegimensActivity extends AppCompatActivity implements AdapterView.O
         if (currentDevice == null) {
             Log.d(TAG, "btnStartRegimen: No device selected.");
             showToast("No device selected to run regimen.");
+        } else if (currentRegimen == null){
+            Log.d(TAG, "btnStartRegimen: No regimen selected.");
+            showToast("No regimen selected to run.");
         } else {
+            //Start Regimen Thread
+            Log.d(TAG, "btnStartRegimen: start regimen thread");
+            stopRegimen = false;
+            pauseRegimen = false;
+            RegimenRunnable runnable = new RegimenRunnable(currentRegimen);
+            new Thread(runnable).start();
             Log.d(TAG, "btnStartRegimen: Running regimen on device " + currentDevice.getName());
+        }
+    }
+
+    public void btnStopRegimen(View view) {
+        if (stopRegimen == false) {
+            stopRegimen = true;
+        }
+    }
+
+    public void btnPauseRegimen(View view) {
+        if (pauseRegimen == false) {
+            pauseRegimen = true;
+        }
+    }
+
+    public void btnResumeRegimen(View view) {
+        if (pauseRegimen == true) {
+            pauseRegimen = false;
         }
     }
 
@@ -526,4 +559,78 @@ public class RegimensActivity extends AppCompatActivity implements AdapterView.O
     }
     //https://stackoverflow.com/questions/19945411/how-can-i-parse-a-local-json-file-from-assets-folder-into-a-listview
     //https://developer.android.com/training/data-storage/app-specific
+
+    //Regimen Thread
+    /*
+    class RegimenThread extends Thread {
+        long duration;
+
+        RegimenThread(Regimen currentReg) {
+            this.duration = (long) currentReg.duration;
+        }
+
+        @Override
+        public void run() {
+            try {
+                Thread.sleep(duration*1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }*/
+
+    class RegimenRunnable implements Runnable {
+        long duration;
+        ArrayList<String> commands;
+
+        RegimenRunnable(Regimen currentReg) {
+            this.duration = (long) currentReg.duration*1000; //in millisecond
+            this.commands = currentReg.commands;
+        }
+
+        @Override
+        public void run() {
+            int currentCommand = 0;
+            while (currentCommand < commands.size()) {
+                if (commands.get(currentCommand).equals("EN+START_WAVE\r")) {
+                    sendBTCommand(commands.get(currentCommand));
+                    currentCommand++;
+                    break;
+                } else {
+                    sendBTCommand(commands.get(currentCommand));
+                    currentCommand++;
+                }
+            }
+            for (long i = 0; i<duration; i=i+10) {
+                try {
+                    Thread.sleep(10);
+                    if (stopRegimen) {
+                        showToast("Stopping Regimen!");
+                        return;
+                    }
+                    if (pauseRegimen) {
+                        showToast("Pausing Regimen!");
+                        sendBTCommand("EN+PAUSE\r");
+                        while (pauseRegimen) {
+                            Thread.sleep(10);
+                            if (!pauseRegimen) {
+                                sendBTCommand("EN+RESUME\r");
+                                showToast("Resuming Regimen!");
+                                break;
+                            }
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            //send last command
+            sendBTCommand(commands.get(currentCommand));
+        }
+    }
+
+    public void sendBTCommand(String command) {
+        Log.d(TAG, "sendBTCommand: " + command);
+        System.out.println("\nsendBTCommand: " + command + "\n");
+    }
 }
