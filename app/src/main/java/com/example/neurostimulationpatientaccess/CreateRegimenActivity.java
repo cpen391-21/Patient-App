@@ -2,7 +2,9 @@ package com.example.neurostimulationpatientaccess;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.JsonWriter;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
@@ -16,7 +18,20 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.util.NumberUtils;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonParser;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,10 +57,15 @@ public class CreateRegimenActivity extends AppCompatActivity implements AdapterV
 
     public ArrayList<Pair<String, Pair<Double, Double>>> regimenWaves;
 
+    private JSONObject newRegimenJson;
+    private String FILE_NAME;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_regimen);
+
+        FILE_NAME = "local_regimens.json";
 
         btnAddRegimen = (Button) findViewById(R.id.btnAddRegimen);
 
@@ -97,6 +117,7 @@ public class CreateRegimenActivity extends AppCompatActivity implements AdapterV
         wave2Spinner.setAdapter(dataAdapter);
         wave3Spinner.setAdapter(dataAdapter);
         //newRegimen = new Regimen("", new ArrayList<Pair<String, Pair<Double, Double>>>(3), 0);
+        newRegimenJson = new JSONObject();
     }
 
     public void addRegimen(View view) {
@@ -151,6 +172,10 @@ public class CreateRegimenActivity extends AppCompatActivity implements AdapterV
                 textWave1Freq.setError("Please enter a number!");
                 textWave1Freq.requestFocus();
                 return;
+            } else if (Double.parseDouble(wave1Freq) < 0) {
+                textWave1Freq.setError("Please enter a positive number!");
+                textWave1Freq.requestFocus();
+                return;
             }
         }
         if (wave2Freq.isEmpty()) {
@@ -161,6 +186,10 @@ public class CreateRegimenActivity extends AppCompatActivity implements AdapterV
             //https://stackabuse.com/java-check-if-string-is-a-number/
             if(!isNumeric(wave2Freq)) {
                 textWave2Freq.setError("Please enter a number!");
+                textWave2Freq.requestFocus();
+                return;
+            } else if (Double.parseDouble(wave2Freq) < 0) {
+                textWave2Freq.setError("Please enter a positive number!");
                 textWave2Freq.requestFocus();
                 return;
             }
@@ -175,6 +204,10 @@ public class CreateRegimenActivity extends AppCompatActivity implements AdapterV
                 textWave3Freq.setError("Please enter a number!");
                 textWave3Freq.requestFocus();
                 return;
+            } else if (Double.parseDouble(wave3Freq) < 0) {
+                textWave3Freq.setError("Please enter a positive number!");
+                textWave3Freq.requestFocus();
+                return;
             }
         }
         if (wave1Amp.isEmpty()) {
@@ -185,6 +218,10 @@ public class CreateRegimenActivity extends AppCompatActivity implements AdapterV
             //https://stackabuse.com/java-check-if-string-is-a-number/
             if(!isNumeric(wave1Amp)) {
                 textWave1Amp.setError("Please enter a number!");
+                textWave1Amp.requestFocus();
+                return;
+            } else if (Double.parseDouble(wave1Amp) < 0) {
+                textWave1Amp.setError("Please enter a positive number!");
                 textWave1Amp.requestFocus();
                 return;
             }
@@ -199,6 +236,10 @@ public class CreateRegimenActivity extends AppCompatActivity implements AdapterV
                 textWave2Amp.setError("Please enter a number!");
                 textWave2Amp.requestFocus();
                 return;
+            } else if (Double.parseDouble(wave2Amp) < 0) {
+                textWave2Amp.setError("Please enter a positive number!");
+                textWave2Amp.requestFocus();
+                return;
             }
         }
         if (wave3Amp.isEmpty()) {
@@ -209,6 +250,10 @@ public class CreateRegimenActivity extends AppCompatActivity implements AdapterV
             //https://stackabuse.com/java-check-if-string-is-a-number/
             if(!isNumeric(wave3Amp)) {
                 textWave3Amp.setError("Please enter a number!");
+                textWave3Amp.requestFocus();
+                return;
+            } else if (Double.parseDouble(wave3Amp) < 0) {
+                textWave3Amp.setError("Please enter a positive number!");
                 textWave3Amp.requestFocus();
                 return;
             }
@@ -223,6 +268,10 @@ public class CreateRegimenActivity extends AppCompatActivity implements AdapterV
                 textDuration.setError("Please enter a number!");
                 textDuration.requestFocus();
                 return;
+            } else if (Double.parseDouble(duration) < 0) {
+                textDuration.setError("Please enter a positive number!");
+                textDuration.requestFocus();
+                return;
             }
         }
         if (offset.isEmpty()) {
@@ -235,7 +284,19 @@ public class CreateRegimenActivity extends AppCompatActivity implements AdapterV
                 textOffset.setError("Please enter a number!");
                 textOffset.requestFocus();
                 return;
+            } else if (Double.parseDouble(offset) < 0) {
+                textOffset.setError("Please enter a positive number!");
+                textOffset.requestFocus();
+                return;
             }
+        }
+
+        if (Double.parseDouble(wave1Amp) + Double.parseDouble(wave2Amp) + Double.parseDouble(wave3Amp) + Double.parseDouble(offset) > 1) {
+            textOffset.requestFocus();
+            textWave1Amp.requestFocus();
+            textWave2Amp.requestFocus();
+            textWave3Amp.requestFocus();
+            showToast("Amplitudes and offset must not sum to more than 1.");
         }
 
         wave1FreqAmp = new Pair(Double.parseDouble(wave1Freq), Double.parseDouble(wave1Amp));
@@ -252,6 +313,50 @@ public class CreateRegimenActivity extends AppCompatActivity implements AdapterV
 
         newRegimen = new Regimen(regimenName, regimenWaves, Double.parseDouble(duration), Double.parseDouble(offset));
         Log.d(TAG, "addRegimen: added newRegimen \n" + newRegimen.commands);
+        //save to backend
+        JSONArray newRegimenWaves = new JSONArray();
+        try {
+            newRegimenJson.put("name", newRegimen.regimenName);
+            newRegimenJson.put("duration", newRegimen.duration);
+            newRegimenJson.put("offset", newRegimen.offset);
+
+            for (int i = 0; i < newRegimen.regimenWaves.size(); i++) {
+                JSONObject newWave = new JSONObject();
+                newWave.put("name", newRegimen.regimenWaves.get(i).first);
+                if (newRegimen.regimenWaves.get(i).first.equals("random")) {
+                    newWave.put("frequency", 0.0);
+                } else {
+                    newWave.put("frequency", newRegimen.regimenWaves.get(i).second.first);
+                }
+                newWave.put("amplitude", newRegimen.regimenWaves.get(i).second.second);
+                newRegimenWaves.put(newWave);
+            }
+            //place waves object
+            newRegimenJson.put("waves", newRegimenWaves);
+            Log.d(TAG, "addRegimen: placed regimen in JSON");
+
+            //https://medium.com/@nayantala259/android-how-to-read-and-write-parse-data-from-json-file-226f821e957a
+            // Convert JsonObject to String Format
+            //String regimenString = newRegimenJson.toString();
+            // Define the File Path and its Name
+            File file = new File(getFilesDir(), FILE_NAME);
+            JsonParser parser = new JsonParser();
+            JsonArray allRegs = (JsonArray) parser.parseReader(new FileReader(file));   // reading the file and creating a json array of it.
+            //JsonArray allRegs = new JsonArray();
+            allRegs.add(newRegimenJson.toString());   // adding your created object into the array
+            FileWriter fileWriter = new FileWriter(file);
+            BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+            bufferedWriter.write(allRegs.toString());
+            bufferedWriter.close();
+            Log.d(TAG, "addRegimen: Directory is: " + getFilesDir().toString());
+            showToast("Regimen Added!");
+            //go back to class
+            startActivity(new Intent(getApplicationContext(), RegimensActivity.class));
+        } catch (JSONException | IOException e) {
+            Log.d(TAG, "addRegimen: failed to place objects in JSON.");
+            showToast("Adding regimen failed!");
+            e.printStackTrace();
+        }
     }
 
     @Override

@@ -170,7 +170,8 @@
                 android:backgroundTint="#005400"
                 android:text="Delete Regimen"
                 android:layout_marginLeft="10dp"
-                android:height="20dp"/>
+                android:height="20dp"
+                android:onClick="btnDeleteRegimen"/>
 
             <Button
                 android:id="@+id/create_regimen_btn"
