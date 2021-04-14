@@ -297,6 +297,7 @@ public class CreateRegimenActivity extends AppCompatActivity implements AdapterV
             textWave2Amp.requestFocus();
             textWave3Amp.requestFocus();
             showToast("Amplitudes and offset must not sum to more than 1.");
+            return;
         }
 
         wave1FreqAmp = new Pair(Double.parseDouble(wave1Freq), Double.parseDouble(wave1Amp));

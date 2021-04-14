@@ -3,12 +3,17 @@ package com.example.neurostimulationpatientaccess;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothServerSocket;
+import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
@@ -29,8 +34,10 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Set;
+import java.util.UUID;
 
 import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
@@ -86,10 +93,24 @@ public class RegimensActivity extends AppCompatActivity implements AdapterView.O
     private String get_URL = "";
     private String FILE_NAME;
 
-    private Handler mainHandler = new Handler();
+    //private Handler mainHandler = new Handler();
 
     private volatile boolean stopRegimen = false;
     private volatile boolean pauseRegimen = false;
+
+    SendReceive sendReceive;
+
+    static final int STATE_LISTENING = 1;
+    static final int STATE_CONNECTING=2;
+    static final int STATE_CONNECTED=3;
+    static final int STATE_CONNECTION_FAILED=4;
+    static final int STATE_MESSAGE_RECEIVED=5;
+
+    int REQUEST_ENABLE_BLUETOOTH=1;
+
+    private static final String APP_NAME = "BTChat";
+    private static final UUID MY_UUID=UUID.fromString("8ce255c0-223a-11e0-ac64-0803450c9a66");
+    TextView status;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -146,9 +167,18 @@ public class RegimensActivity extends AppCompatActivity implements AdapterView.O
         btDevices.setOnItemClickListener(RegimensActivity.this);
         currentRegimens.setOnItemClickListener(RegimensActivity.this);
 
+        status = (TextView) findViewById(R.id.status_txt);
+
         final RequestQueue postQueue = Volley.newRequestQueue(this);
         final RequestQueue getQueue = Volley.newRequestQueue(this);
         final JSONObject jsnReq = new JSONObject();
+
+        if(!mBluetoothAdapter.isEnabled())
+        {
+            Log.d(TAG, "Enabling Bluetooth!");
+            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableIntent, REQUEST_ENABLE_BLUETOOTH);
+        }
 
         try {
             jsnReq.put("token", FirebaseAuth.getInstance().getCurrentUser().getIdToken(true));
@@ -436,7 +466,10 @@ public class RegimensActivity extends AppCompatActivity implements AdapterView.O
             currentDeviceName.setText(currentDevice.getName());
             currentDeviceAddress.setText(currentDevice.getAddress());
             //connect device
-
+            ServerClass serverClass = new ServerClass();
+            serverClass.start();
+            ClientClass clientClass = new ClientClass(currentDevice);
+            clientClass.start();
         }
         //regimens list
         else if (adapterView.getId() == R.id.regimensList) {
@@ -537,18 +570,21 @@ public class RegimensActivity extends AppCompatActivity implements AdapterView.O
     }
 
     public void btnStopRegimen(View view) {
+        Log.d(TAG, "btnStopRegimen clicked");
         if (stopRegimen == false) {
             stopRegimen = true;
         }
     }
 
     public void btnPauseRegimen(View view) {
+        Log.d(TAG, "btnPauseRegimen clicked");
         if (pauseRegimen == false) {
             pauseRegimen = true;
         }
     }
 
     public void btnResumeRegimen(View view) {
+        Log.d(TAG, "btnResumeRegimen clicked");
         if (pauseRegimen == true) {
             pauseRegimen = false;
         }
@@ -601,21 +637,40 @@ public class RegimensActivity extends AppCompatActivity implements AdapterView.O
                     currentCommand++;
                 }
             }
-            for (long i = 0; i<duration; i=i+10) {
+            for (long i = 0; i<duration; i=i+1000) {
                 try {
-                    Thread.sleep(10);
+                    Thread.sleep(1000);
                     if (stopRegimen) {
-                        showToast("Stopping Regimen!");
+                        sendBTCommand("EN+STOP_WAVE\r");
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Log.d(TAG, "Stopping Regimen!");
+                                showToast("Stopping Regimen!");
+                            }
+                        });
                         return;
                     }
                     if (pauseRegimen) {
-                        showToast("Pausing Regimen!");
                         sendBTCommand("EN+PAUSE\r");
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                showToast("Pausing Regimen!");
+                                Log.d(TAG, "Pausing Regimen!");
+                            }
+                        });
                         while (pauseRegimen) {
-                            Thread.sleep(10);
+                            Thread.sleep(100);
                             if (!pauseRegimen) {
                                 sendBTCommand("EN+RESUME\r");
-                                showToast("Resuming Regimen!");
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Log.d(TAG, "Resuming Regimen!");
+                                        showToast("Resuming Regimen!");
+                                    }
+                                });
                                 break;
                             }
                         }
@@ -629,8 +684,192 @@ public class RegimensActivity extends AppCompatActivity implements AdapterView.O
         }
     }
 
+    Handler handler=new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message msg) {
+
+            switch (msg.what)
+            {
+                case STATE_LISTENING:
+                    status.setText("Listening");
+                    break;
+                case STATE_CONNECTING:
+                    status.setText("Connecting");
+                    break;
+                case STATE_CONNECTED:
+                    status.setText("Connected");
+                    break;
+                case STATE_CONNECTION_FAILED:
+                    status.setText("Connection Failed");
+                    break;
+                case STATE_MESSAGE_RECEIVED:
+                    byte[] readBuff= (byte[]) msg.obj;
+                    String tempMsg=new String(readBuff,0,msg.arg1);
+                    //msg_box.setText(tempMsg);
+                    break;
+            }
+            return true;
+        }
+    });
+
+    //send BT stuff
+    private class ServerClass extends Thread
+    {
+        private BluetoothServerSocket serverSocket;
+
+        public ServerClass(){
+            try {
+                serverSocket = mBluetoothAdapter.listenUsingRfcommWithServiceRecord(APP_NAME,MY_UUID);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public void run()
+        {
+            BluetoothSocket socket = null;
+
+            while (socket==null)
+            {
+                try {
+                    Message message=Message.obtain();
+                    message.what=STATE_CONNECTING;
+                    handler.sendMessage(message);
+
+                    socket=serverSocket.accept();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Message message=Message.obtain();
+                    message.what=STATE_CONNECTION_FAILED;
+                    handler.sendMessage(message);
+                }
+
+                if(socket != null)
+                {
+                    Message message=Message.obtain();
+                    message.what=STATE_CONNECTED;
+                    handler.sendMessage(message);
+
+                    sendReceive = new SendReceive(socket);
+                    sendReceive.start();
+
+                    break;
+                }
+            }
+        }
+    }
+
+    private class ClientClass extends Thread
+    {
+        private BluetoothDevice device;
+        private BluetoothSocket socket;
+
+        public ClientClass (BluetoothDevice device1)
+        {
+            device=device1;
+
+            try {
+                socket=device.createRfcommSocketToServiceRecord(MY_UUID);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public void run()
+        {
+            try {
+                socket.connect();
+                Message message=Message.obtain();
+                message.what=STATE_CONNECTED;
+                handler.sendMessage(message);
+
+                sendReceive = new SendReceive(socket);
+                sendReceive.start();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                Message message=Message.obtain();
+                message.what=STATE_CONNECTION_FAILED;
+                handler.sendMessage(message);
+            }
+        }
+    }
+
+    private class SendReceive extends Thread
+    {
+        private final BluetoothSocket bluetoothSocket;
+        private final InputStream inputStream;
+        private final OutputStream outputStream;
+
+        public SendReceive (BluetoothSocket socket)
+        {
+            bluetoothSocket=socket;
+            InputStream tempIn=null;
+            OutputStream tempOut=null;
+
+            try {
+                tempIn=bluetoothSocket.getInputStream();
+                tempOut=bluetoothSocket.getOutputStream();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            inputStream=tempIn;
+            outputStream=tempOut;
+        }
+
+        public void run()
+        {
+            byte[] buffer=new byte[1024];
+            int bytes;
+
+            while (true)
+            {
+                try {
+                    bytes=inputStream.read(buffer);
+                    handler.obtainMessage(STATE_MESSAGE_RECEIVED,bytes,-1,buffer).sendToTarget();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        public void write(byte[] bytes)
+        {
+            try {
+                outputStream.write(bytes);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public void sendBTCommand(String command) {
         Log.d(TAG, "sendBTCommand: " + command);
         System.out.println("\nsendBTCommand: " + command + "\n");
+
+        //write to BlueTooth
+        status.setText("Sending!");
+        sendReceive.write(command.getBytes());
     }
 }
+
+
+/*
+https://www.youtube.com/watch?v=sifzY2SA1XU&list=PLgCYzUzKIBE8KHMzpp6JITZ2JxTgWqDH2&index=8
+
+https://www.youtube.com/watch?v=j2eveSMBaaM
+
+https://github.com/mitchtabian/Sending-and-Receiving-Data-with-Bluetooth/tree/master/Bluetooth-Communication/app/src/main/res/layout
+
+https://github.com/mitchtabian/Sending-and-Receiving-Data-with-Bluetooth/blob/master/Bluetooth-Communication/app/src/main/res/layout/activity_main.xml
+
+https://github.com/mitchtabian/Sending-and-Receiving-Data-with-Bluetooth/blob/master/Bluetooth-Communication/app/src/main/res/layout/device_adapter_view.xml
+
+https://github.com/mitchtabian/Sending-and-Receiving-Data-with-Bluetooth/blob/master/Bluetooth-Communication/app/src/main/java/com/example/user/bluetooth_communication/BluetoothConnectionService.java
+
+https://github.com/mitchtabian/Sending-and-Receiving-Data-with-Bluetooth/blob/master/Bluetooth-Communication/app/src/main/java/com/example/user/bluetooth_communication/DeviceListAdapter.java
+
+https://github.com/mitchtabian/Sending-and-Receiving-Data-with-Bluetooth/blob/master/Bluetooth-Communication/app/src/main/java/com/example/user/bluetooth_communication/MainActivity.java
+
+ */
