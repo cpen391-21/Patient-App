@@ -111,6 +111,7 @@ public class RegimensActivity extends AppCompatActivity implements AdapterView.O
     private static final String APP_NAME = "BTChat";
     private static final UUID MY_UUID=UUID.fromString("8ce255c0-223a-11e0-ac64-0803450c9a66");
     TextView status;
+    TextView countdown;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -168,6 +169,7 @@ public class RegimensActivity extends AppCompatActivity implements AdapterView.O
         currentRegimens.setOnItemClickListener(RegimensActivity.this);
 
         status = (TextView) findViewById(R.id.status_txt);
+        countdown = (TextView) findViewById(R.id.countdown_txt);
 
         final RequestQueue postQueue = Volley.newRequestQueue(this);
         final RequestQueue getQueue = Volley.newRequestQueue(this);
@@ -485,6 +487,7 @@ public class RegimensActivity extends AppCompatActivity implements AdapterView.O
         }
     }
 
+    //delete regimen
     public void btnDeleteRegimen(View view) {
         //String currentRegimenName = currentRegimen.regimenName;
         if (currentRegimen == null) {
@@ -628,6 +631,7 @@ public class RegimensActivity extends AppCompatActivity implements AdapterView.O
         public void run() {
             int currentCommand = 0;
             while (currentCommand < commands.size()) {
+                //this sends the first set of commands until EN+START_WAVE
                 if (commands.get(currentCommand).equals("EN+START_WAVE\r")) {
                     sendBTCommand(commands.get(currentCommand));
                     currentCommand++;
@@ -639,6 +643,14 @@ public class RegimensActivity extends AppCompatActivity implements AdapterView.O
             }
             for (long i = 0; i<duration; i=i+1000) {
                 try {
+                    long finalI = (duration - i)/1000;
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            //countdown is displayed
+                            countdown.setText(" Seconds Remaining: " + String.valueOf(finalI));
+                        }
+                    });
                     Thread.sleep(1000);
                     if (stopRegimen) {
                         sendBTCommand("EN+STOP_WAVE\r");
@@ -647,6 +659,9 @@ public class RegimensActivity extends AppCompatActivity implements AdapterView.O
                             public void run() {
                                 Log.d(TAG, "Stopping Regimen!");
                                 showToast("Stopping Regimen!");
+                                //countdown ends as regimen is stopped
+                                status.setText("");
+                                countdown.setText(String.valueOf(""));
                             }
                         });
                         return;
@@ -678,9 +693,18 @@ public class RegimensActivity extends AppCompatActivity implements AdapterView.O
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+
             }
             //send last command
             sendBTCommand(commands.get(currentCommand));
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    //countdown ends
+                    status.setText("");
+                    countdown.setText(String.valueOf(""));
+                }
+            });
         }
     }
 
@@ -766,10 +790,10 @@ public class RegimensActivity extends AppCompatActivity implements AdapterView.O
 
         public ClientClass (BluetoothDevice device1)
         {
-            device=device1;
+            device = device1;
 
             try {
-                socket=device.createRfcommSocketToServiceRecord(MY_UUID);
+                socket = device.createRfcommSocketToServiceRecord(MY_UUID);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -849,8 +873,24 @@ public class RegimensActivity extends AppCompatActivity implements AdapterView.O
         System.out.println("\nsendBTCommand: " + command + "\n");
 
         //write to BlueTooth
-        status.setText("Sending!");
-        sendReceive.write(command.getBytes());
+        try {
+            //send command
+            sendReceive.write(command.getBytes());
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    showToast("Sending Commands");
+                }
+            });
+        } catch (NullPointerException e) {
+            //send Toast if command cannot be sent
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    showToast("Failed to send command!");
+                }
+            });
+        }
     }
 }
 
@@ -872,4 +912,5 @@ https://github.com/mitchtabian/Sending-and-Receiving-Data-with-Bluetooth/blob/ma
 
 https://github.com/mitchtabian/Sending-and-Receiving-Data-with-Bluetooth/blob/master/Bluetooth-Communication/app/src/main/java/com/example/user/bluetooth_communication/MainActivity.java
 
+https://drive.google.com/file/d/1p5HPB_yxcPNvECSrp4tWZplUaMplvfzj/view
  */
